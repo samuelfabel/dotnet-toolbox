@@ -11,6 +11,8 @@ namespace Iso8583.Message.Field;
 /// <param name="getter">The function to get the value of the field.</param>
 public abstract class VarField(int index, VarConfig config) : Iso8583Field(index)
 {
+    protected VarConfig Config => config;
+
     /// <summary>
     /// Deserializes the length of the field from the message.
     /// </summary>
@@ -22,7 +24,7 @@ public abstract class VarField(int index, VarConfig config) : Iso8583Field(index
     {
         EnsureAvailable(data, offset);
 
-        return VarEncoder.DecodeLength(data, config.LengthLength, offset);
+        return VarEncoder.DecodeLength(data, Config.LengthLength, ref offset);
     }
 
     /// <summary>
@@ -32,6 +34,6 @@ public abstract class VarField(int index, VarConfig config) : Iso8583Field(index
     /// <param name="length">The length of the field.</param>
     protected virtual void SerializeLength(Stream stream, int length)
     {
-        stream.Write(VarEncoder.EncodeLength(length, config.LengthLength));
+        stream.Write(VarEncoder.EncodeLength(length, Config.LengthLength));
     }
 }

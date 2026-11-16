@@ -6,12 +6,13 @@ namespace Iso8583.Message.Field;
 /// DoubleBcdField is a field that stores a double value in BCD format.
 /// </summary>
 /// <param name="index">The index of the field.</param>
+/// <param name="size">The size of the field.</param>
 /// <param name="precision">The precision of the value to serialize.</param>
 /// <param name="setter">The action to set the value of the field.</param>
 /// <param name="getter">The function to get the value of the field.</param>    
-public class DecimalBcdField(int index, int precision, Action<Iso8583Message, decimal> setter, Func<Iso8583Message, decimal?> getter) : Iso8583Field(index, 12)
+public class DecimalBcdField(int index, int size, int precision, Action<Iso8583Message, decimal> setter, Func<Iso8583Message, decimal?> getter) : Iso8583Field(index, size / 2)
 {
-    private readonly decimal _maxValue = (decimal)Math.Pow(10, precision) - 1;
+    private readonly decimal _maxValue = ((decimal)Math.Pow(10, size) - 1) / ((decimal)Math.Pow(10, precision));
 
     /// <summary>
     /// Deserializes the field from the message.
@@ -22,17 +23,17 @@ public class DecimalBcdField(int index, int precision, Action<Iso8583Message, de
     /// <returns>The number of bytes deserialized.</returns>
     /// <exception cref="InvalidOperationException">Thrown if the data is not available.</exception>
     /// <exception cref="InvalidOperationException">Thrown if the value is too large for the field.</exception>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
-        var value = BcdEncoder.DecodeDecimal(data, offset, Length, precision);
+        var value = BcdEncoder.DecodeDecimal(data, ref offset, size, precision);
+
         if (value > _maxValue)
             throw new InvalidOperationException($"Value is too large for the field. Maximum value is {_maxValue}.");
 
         setter(message, value);
-        offset += Length;
-        return Length;
+
     }
 
     /// <summary>
@@ -47,11 +48,10 @@ public class DecimalBcdField(int index, int precision, Action<Iso8583Message, de
         if (value is null)
             return false;
 
-        var buffer = new byte[Length];
-        BcdEncoder.Encode(value.Value, precision, buffer);
+        var buffer = BcdEncoder.Encode(value.Value, size, precision);
+
         stream.Write(buffer);
 
         return true;
     }
-
 }

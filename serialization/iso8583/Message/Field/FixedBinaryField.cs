@@ -10,7 +10,7 @@ namespace Iso8583.Message.Field;
 public class FixedBinaryField(int index, int length, Action<Iso8583Message, byte[]> setter, Func<Iso8583Message, byte[]?> getter) : Iso8583Field(index, length)
 {
     /// <inheritdoc/>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
@@ -19,8 +19,6 @@ public class FixedBinaryField(int index, int length, Action<Iso8583Message, byte
         setter(message, value.ToArray());
 
         offset += Length;
-
-        return Length;
     }
 
     /// <inheritdoc/>

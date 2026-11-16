@@ -12,17 +12,14 @@ namespace Iso8583.Message.Field;
 public abstract class VarBinaryField(int index, VarConfig config, Action<Iso8583Message, byte[]> setter, Func<Iso8583Message, byte[]?> getter, int? maxLength = null) : VarField(index, config)
 {
     /// <inheritdoc/>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
         var length = DeserializeLength(data, ref offset);
 
         var value = data.Slice(offset, length);
-
         setter(message, value.ToArray());
-        offset += length;
-        return length;
     }
 
     protected virtual bool Validate(byte[] value)

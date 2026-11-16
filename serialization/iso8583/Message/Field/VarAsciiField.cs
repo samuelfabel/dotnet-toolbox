@@ -12,16 +12,13 @@ namespace Iso8583.Message.Field;
 public abstract class VarAsciiField(int index, VarConfig config, Action<Iso8583Message, string> setter, Func<Iso8583Message, string?> getter, int? maxLength = null) : VarField(index, config)
 {
     /// <inheritdoc/>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
-        var value = VarEncoder.Decode(data, config.LengthLength, ref offset);
+        var value = VarEncoder.Decode(data, Config.LengthLength, ref offset);
 
         setter(message, value);
-        offset += value.Length + config.LengthLength;
-
-        return value.Length + config.LengthLength;
     }
 
     protected virtual bool Validate(string value)
@@ -40,7 +37,7 @@ public abstract class VarAsciiField(int index, VarConfig config, Action<Iso8583M
         if (!Validate(value))
             throw new InvalidOperationException($"Value is not valid for the field.");
 
-        VarEncoder.Encode(value, config.LengthLength, stream);
+        VarEncoder.Encode(value, Config.LengthLength, stream);
 
         return true;
     }

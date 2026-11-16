@@ -8,13 +8,11 @@ namespace Iso8583.Message.Field;
 public class DumbField(int index, int length) : Iso8583Field(index, length)
 {
     /// <inheritdoc/>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
         offset += Length;
-
-        return Length;
     }
 
     /// <inheritdoc/>

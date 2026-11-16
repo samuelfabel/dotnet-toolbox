@@ -9,20 +9,19 @@ namespace Iso8583.Message.Field;
 /// <param name="length">The length of the field.</param>
 /// <param name="setter">The action to set the value of the field.</param>
 /// <param name="getter">The function to get the value of the field.</param>
-public class FixedBcdField(int index, int length, Action<Iso8583Message, string> setter, Func<Iso8583Message, string?> getter) : Iso8583Field(index, length)
+public class FixedBcdField(int index, int length, Action<Iso8583Message, string> setter, Func<Iso8583Message, string?> getter) : Iso8583Field(index, (length + 1) / 2)
 {
     /// <inheritdoc/>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
-        var value = BcdEncoder.Decode(data, offset, Length);
+        var value = BcdEncoder.Decode(data, ref offset, length);
+
+        if (value.Length > length)
+            value = value.Substring(value.Length - length, length);
 
         setter(message, value);
-
-        offset += Length;
-
-        return Length;
     }
 
     /// <inheritdoc/>
@@ -33,14 +32,14 @@ public class FixedBcdField(int index, int length, Action<Iso8583Message, string>
         if (value is null)
             return false;
 
+        value = value.PadLeft(length, '0');
+
         if (value.Length % 2 != 0)
-            value += '0';
+            value = $"0{value}";
 
-        var destination = new byte[(Length + 1) / 2];
+        var buffer = BcdEncoder.Encode(value);
 
-        BcdEncoder.Encode(value, destination);
-
-        stream.Write(destination);
+        stream.Write(buffer);
 
         return true;
     }

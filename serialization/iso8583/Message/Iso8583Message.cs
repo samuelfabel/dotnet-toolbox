@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Iso8583.Message.Field;
 
 namespace Iso8583.Message;
@@ -5,12 +7,19 @@ namespace Iso8583.Message;
 /// <summary>
 /// Represents an ISO 8583 message with various fields.
 /// </summary>
-public class Iso8583Message(ReadOnlySpan<byte> primaryBitmap)
+public class Iso8583Message(string mti, ReadOnlySpan<byte> primaryBitmap)
 {
+    public Iso8583Message(string mti) : this(mti, new byte[8]) { }
+
     /// <summary>
-    /// Gets or sets the primary bitmap of the ISO 8583 message.
+    /// Gets the MTI of the ISO 8583 message.
     /// </summary>
-    public byte[] PrimaryBitmap { get; set; } = primaryBitmap.ToArray();
+    public string Mti { get; } = mti;
+
+    /// <summary>
+    /// Gets the primary bitmap of the ISO 8583 message.
+    /// </summary>
+    public byte[] PrimaryBitmap { get; } = primaryBitmap.ToArray();
 
     /// <summary>
     /// Gets or sets the secondary bitmap of the ISO 8583 message. #1
@@ -95,7 +104,7 @@ public class Iso8583Message(ReadOnlySpan<byte> primaryBitmap)
     /// <summary>
     /// Gets or sets the capture date of the ISO 8583 message. #17
     /// </summary>
-    public DateOnly CaptureDate { get; set; }
+    public DateOnly? CaptureDate { get; set; }
 
     /// <summary>
     /// Gets or sets the merchant type / MCC of the ISO 8583 message. #18
@@ -344,13 +353,13 @@ public class Iso8583Message(ReadOnlySpan<byte> primaryBitmap)
             new FixedBinaryField(1, 8, (m, v) => m.SecondaryBitmap = v, m => m.SecondaryBitmap),
             new FixedBcdField(2, 19, (m, v) => m.PrimaryAccountNumber = v, m => m.PrimaryAccountNumber),
             new FixedBcdField(3, 6, (m, v) => m.ProcessingCode = v, m => m.ProcessingCode),
-            new DecimalBcdField(4, 12, (m, v) => m.AmountTransaction = v, m => m.AmountTransaction),
-            new DecimalBcdField(5, 12, (m, v) => m.AmountSettlement = v, m => m.AmountSettlement),
-            new DecimalBcdField(6, 12, (m, v) => m.AmountCardholderBilling = v, m => m.AmountCardholderBilling),
+            new DecimalBcdField(4, 12, 2, (m, v) => m.AmountTransaction = v, m => m.AmountTransaction),
+            new DecimalBcdField(5, 12, 2, (m, v) => m.AmountSettlement = v, m => m.AmountSettlement),
+            new DecimalBcdField(6, 12, 2, (m, v) => m.AmountCardholderBilling = v, m => m.AmountCardholderBilling),
             new DateTimeBcdField(7,  (m, v) => m.TransmissionDateTime = v, m => m.TransmissionDateTime),
-            new DecimalBcdField(8, 8, (m, v) => m.AmountCardholderBillingFee = v, m => m.AmountCardholderBillingFee),
-            new DecimalBcdField(9, 8, (m, v) => m.ConversionRateSettlement = v, m => m.ConversionRateSettlement),
-            new DecimalBcdField(10, 8, (m, v) => m.ConversionRateCardholderBilling = v, m => m.ConversionRateCardholderBilling),
+            new DecimalBcdField(8, 8, 2, (m, v) => m.AmountCardholderBillingFee = v, m => m.AmountCardholderBillingFee),
+            new DecimalBcdField(9, 8, 2, (m, v) => m.ConversionRateSettlement = v, m => m.ConversionRateSettlement),
+            new DecimalBcdField(10, 8, 2, (m, v) => m.ConversionRateCardholderBilling = v, m => m.ConversionRateCardholderBilling),
             new FixedBcdField(11, 6, (m, v) => m.SystemTraceAuditNumber = v, m => m.SystemTraceAuditNumber),
             new TimeOnlyBcdField(12, (m, v) => m.LocalTransactionTime = v, m => m.LocalTransactionTime),
             new DateOnlyBcdField(13, (m, v) => m.LocalTransactionDate = v, m => m.LocalTransactionDate),
@@ -368,10 +377,10 @@ public class Iso8583Message(ReadOnlySpan<byte> primaryBitmap)
             new FixedBcdField(25, 2, (m, v) => m.PointOfServiceConditionCode = v, m => m.PointOfServiceConditionCode),
             new FixedBcdField(26, 2, (m, v) => m.PointOfServiceCaptureCode = v, m => m.PointOfServiceCaptureCode),
             new ByteField(27, (m, v) => m.AuthorizingIdentificationResponseLength = v, m => m.AuthorizingIdentificationResponseLength),
-            new DecimalBcdField(28, 8, (m, v) => m.TransactionFee = v, m => m.TransactionFee),
-            new DecimalBcdField(29, 8, (m, v) => m.SettlementFee = v, m => m.SettlementFee),
-            new DecimalBcdField(30, 8, (m, v) => m.TransactionProcessingFee = v, m => m.TransactionProcessingFee),
-            new DecimalBcdField(31, 8, (m, v) => m.SettlementProcessingFee = v, m => m.SettlementProcessingFee),
+            new DecimalBcdField(28, 8, 2, (m, v) => m.TransactionFee = v, m => m.TransactionFee),
+            new DecimalBcdField(29, 8, 2, (m, v) => m.SettlementFee = v, m => m.SettlementFee),
+            new DecimalBcdField(30, 8, 2, (m, v) => m.TransactionProcessingFee = v, m => m.TransactionProcessingFee),
+            new DecimalBcdField(31, 8, 2, (m, v) => m.SettlementProcessingFee = v, m => m.SettlementProcessingFee),
             new LlvarAsciiField(32, (m, v) => m.AcquiringInstitutionIdentificationCode = v, m => m.AcquiringInstitutionIdentificationCode),
             new LlvarAsciiField(33, (m, v) => m.ForwardingInstitutionIdentificationCode = v, m => m.ForwardingInstitutionIdentificationCode),
             new LlvarAsciiField(34, (m, v) => m.PanExtended = v, m => m.PanExtended),
@@ -406,6 +415,11 @@ public class Iso8583Message(ReadOnlySpan<byte> primaryBitmap)
             new LllvarAsciiField(63, (m, v) => m.ReservedPrivate63 = v, m => m.ReservedPrivate63, 999),
             new FixedBinaryField(64, 8, (m, v) => m.MessageAuthenticationCode = v, m => m.MessageAuthenticationCode),
         ];
+    }
+
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
     }
 }
 

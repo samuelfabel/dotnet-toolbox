@@ -36,11 +36,14 @@ public class FixedEncoder : TextEncoder
     /// Decodes a fixed length byte array to a string.
     /// </summary>
     /// <param name="source">The source byte array.</param>
-    /// <param name="start">The start index in the source byte array.</param>
+    /// <param name="offset">The offset to decode from.</param>
     /// <param name="length">The length of the decoded string.</param>
     /// <returns>The decoded string.</returns>
-    public static string Decode(ReadOnlySpan<byte> source, int start, int length)
+    public static string Decode(ReadOnlySpan<byte> source, ref int offset, int length)
     {
-        return Encoding.GetString(source.Slice(start, length));
+        var value = Encoding.GetString(source.Slice(offset, length));
+        offset += length;
+
+        return value;
     }
 }

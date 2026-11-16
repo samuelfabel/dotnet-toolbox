@@ -8,20 +8,16 @@ namespace Iso8583.Message.Field;
 /// <param name="index">The index of the field.</param>
 /// <param name="setter">The action to set the value of the field.</param>
 /// <param name="getter">The function to get the value of the field.</param>
-public class DateTimeBcdField(int index, Action<Iso8583Message, DateTime> setter, Func<Iso8583Message, DateTime?> getter) : Iso8583Field(index, 12)
+public class DateTimeBcdField(int index, Action<Iso8583Message, DateTime> setter, Func<Iso8583Message, DateTime?> getter) : Iso8583Field(index, 7)
 {
     /// <inheritdoc/>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
-        var value = BcdEncoder.DecodeDateTime(data, offset, Length);
+        var value = BcdEncoder.DecodeDateTime(data, ref offset);
 
         setter(message, value);
-
-        offset += Length;
-
-        return Length;
     }
 
     /// <inheritdoc/>
@@ -32,9 +28,7 @@ public class DateTimeBcdField(int index, Action<Iso8583Message, DateTime> setter
         if (value is null)
             return false;
 
-        var buffer = new byte[Length / 2];
-
-        BcdEncoder.Encode(value.Value, buffer);
+        var buffer = BcdEncoder.Encode(value.Value);
 
         stream.Write(buffer);
 

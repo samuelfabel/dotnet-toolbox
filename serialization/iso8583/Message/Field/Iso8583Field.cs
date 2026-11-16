@@ -15,12 +15,12 @@ public abstract class Iso8583Field(int index, int length)
     /// <summary>
     /// The position of the field in the bitmap.
     /// </summary>
-    public int BitMapPosition { get; set; } = index / 8;
+    public int BitMapPosition { get; set; } = (index - 1) / 8;
 
     /// <summary>
     /// The value of the field in the bitmap.
     /// </summary>
-    public byte BitMapValue { get; set; } = (byte)(1 << (index % 8));
+    public byte BitMapValue { get; set; } = (byte)(1 << (7 - ((index - 1) % 8)));
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Iso8583Field"/> class.
@@ -36,9 +36,8 @@ public abstract class Iso8583Field(int index, int length)
     /// <param name="message">The message to deserialize from.</param>
     /// <param name="data">The data to deserialize from.</param>
     /// <param name="offset">The offset to deserialize from.</param>
-    /// <returns>The number of bytes deserialized.</returns>
     /// <exception cref="InvalidOperationException">Thrown if the data is insufficient to deserialize the field.</exception>
-    public abstract int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset);
+    public abstract void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset);
 
     /// <summary>
     /// Serializes the field to the message.

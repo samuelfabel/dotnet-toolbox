@@ -38,7 +38,7 @@ public class VarEncoder : TextEncoder
     /// <returns>The decoded string.</returns>
     public static string Decode(ReadOnlySpan<byte> source, int lengthLength, ref int offset)
     {
-        var length = DecodeLength(source, lengthLength, offset);
+        var length = DecodeLength(source, lengthLength, ref offset);
 
         var value = Encoding.GetString(source.Slice(offset, length));
 
@@ -86,7 +86,7 @@ public class VarEncoder : TextEncoder
     /// <param name="lengthLength">The length of the length field.</param>
     /// <param name="offset">The offset to decode from.</param>
     /// <returns>The decoded length.</returns>
-    public static int DecodeLength(ReadOnlySpan<byte> source, int lengthLength, int offset)
+    public static int DecodeLength(ReadOnlySpan<byte> source, int lengthLength, ref int offset)
     {
         switch (LengthEncoding)
         {
@@ -98,9 +98,11 @@ public class VarEncoder : TextEncoder
                     length = length * 10 + (source[offset + i] - '0');
                 }
 
+                offset += lengthLength;
+
                 return length;
             case LengthEncoding.Bcd:
-                return BcdEncoder.Decode<int>(source, offset, lengthLength);
+                return BcdEncoder.Decode<int>(source, ref offset, lengthLength);
             default:
                 var bytes = source.Slice(offset, lengthLength);
 
@@ -110,6 +112,8 @@ public class VarEncoder : TextEncoder
                     bytes.CopyTo(paddedBytes);
                     bytes = paddedBytes;
                 }
+
+                offset += lengthLength;
 
                 return BitConverter.ToInt32(bytes);
         }

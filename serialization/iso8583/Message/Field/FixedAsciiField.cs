@@ -13,15 +13,13 @@ namespace Iso8583.Message.Field;
 public class FixedAsciiField(int index, int length, Action<Iso8583Message, string> setter, Func<Iso8583Message, string?> getter, char paddingChar = ' ') : Iso8583Field(index, length)
 {
     /// <inheritdoc/>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
-        var value = FixedEncoder.Decode(data, offset, Length);
+        var value = FixedEncoder.Decode(data, ref offset, Length);
 
         setter(message, value);
-
-        return Length;
     }
 
     /// <inheritdoc/>

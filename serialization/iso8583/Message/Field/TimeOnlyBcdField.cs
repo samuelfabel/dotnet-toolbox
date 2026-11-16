@@ -11,17 +11,13 @@ namespace Iso8583.Message.Field;
 public class TimeOnlyBcdField(int index, Action<Iso8583Message, TimeOnly> setter, Func<Iso8583Message, TimeOnly?> getter) : Iso8583Field(index, 6)
 {
     /// <inheritdoc/>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
-        var value = BcdEncoder.DecodeTimeOnly(data, offset, Length);
+        var value = BcdEncoder.DecodeTimeOnly(data, ref offset);
 
         setter(message, value);
-
-        offset += Length;
-
-        return Length;
     }
 
     /// <inheritdoc/>
@@ -32,9 +28,7 @@ public class TimeOnlyBcdField(int index, Action<Iso8583Message, TimeOnly> setter
         if (value is null)
             return false;
 
-        var buffer = new byte[Length / 2];
-
-        BcdEncoder.Encode(value.Value, buffer);
+        var buffer = BcdEncoder.Encode(value.Value);
 
         stream.Write(buffer);
 

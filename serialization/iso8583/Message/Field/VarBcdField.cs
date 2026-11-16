@@ -12,7 +12,7 @@ namespace Iso8583.Message.Field;
 public abstract class VarBcdField(int index, VarConfig config, Action<Iso8583Message, string> setter, Func<Iso8583Message, string?> getter, int? maxLength = null) : VarField(index, config)
 {
     /// <inheritdoc/>
-    public override int Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
+    public override void Deserialize(Iso8583Message message, ReadOnlySpan<byte> data, ref int offset)
     {
         EnsureAvailable(data, offset);
 
@@ -23,16 +23,12 @@ public abstract class VarBcdField(int index, VarConfig config, Action<Iso8583Mes
         if (packedLength % 2 != 0)
             packedLength++;
 
-        var value = BcdEncoder.Decode(data, offset, packedLength);
+        var value = BcdEncoder.Decode(data, ref offset, packedLength);
 
-        if (value.Length != length)
+        if (value.Length > length)
             value = value[..length];
 
         setter(message, value);
-
-        offset += packedLength / 2;
-
-        return packedLength / 2 + config.LengthLength;
     }
 
     protected virtual bool Validate(string value)
@@ -51,14 +47,13 @@ public abstract class VarBcdField(int index, VarConfig config, Action<Iso8583Mes
         if (!Validate(value))
             throw new InvalidOperationException($"Value is not valid for the field.");
 
-        var buffer = new byte[value.Length / 2];
-
-        SerializeLength(stream, value.Length);
-
         if (value.Length % 2 != 0)
             value += '0';
 
-        BcdEncoder.Encode(value, buffer);
+        var buffer = BcdEncoder.Encode(value);
+
+        SerializeLength(stream, value.Length);
+
         stream.Write(buffer);
 
         return true;
